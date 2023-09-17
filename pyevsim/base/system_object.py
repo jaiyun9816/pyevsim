@@ -1,13 +1,13 @@
 import datetime
 
-class SysObject(object):
+class SystemObject(object):
     # Object ID which tracks the entire instantiated Objects
     __GLOBAL_OBJECT_ID = 0
 
     def __init__(self):
         self.__created_time = datetime.datetime.now()
-        self.__object_id = SysObject.__GLOBAL_OBJECT_ID
-        SysObject.__GLOBAL_OBJECT_ID = SysObject.__GLOBAL_OBJECT_ID + 1
+        self.__object_id = SystemObject.__GLOBAL_OBJECT_ID
+        SystemObject.__GLOBAL_OBJECT_ID = SystemObject.__GLOBAL_OBJECT_ID + 1
 
     def __str__(self):
         return "ID:%10d %s" % (self.__object_id, self.__created_time)

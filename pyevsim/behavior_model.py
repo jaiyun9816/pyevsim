@@ -1,94 +1,82 @@
-from collections import OrderedDict
-from .definition import CoreModel, ModelType
+from .base.system_object import SystemObject
+from abc import abstractmethod
+from .base.model_structure import ModelStructure
+from .base.definition import *
 
-class BehaviorModel(CoreModel):
-    def __init__(self, _name=""):
-        super(BehaviorModel, self).__init__(_name, ModelType.BEHAVIORAL)
-        self._states = {}
+class BehaviorModel(SystemObject, ModelStructure):
+    def __init__(self, instantiate_time=Infinite, destruct_time=Infinite, name=".", engine_name="default"):
+        SystemObject.__init__(self)
+        ModelStructure.__init__(self, name)
+        self.engine_name = engine_name
+        self._instance_t = instantiate_time
+        self._destruct_t = destruct_time
+        self._next_event_t = 0
+        self._cur_state = ""
+        self.RequestedTime = float("inf")
+        self._not_available = None
 
-        self.external_transition_map_tuple = {}
-        self.external_transition_map_state = {}
-        self.internal_transition_map_tuple = {}
-        self.internal_transition_map_state = {}
+        # 2021.10.16 cbchoi
+        self._cancel_reschedule_f = False
 
-    def insert_state(self, name, deadline="inf"):
-        # TODO: Exception Handling
-        # TA < 0
-        # Duplicated State
-        self._states[name] = float(deadline)
+    def __str__(self):
+        return "[N]:{0}, [S]:{1}".format(self.get_name(), self._cur_state)
 
-    def update_state(self, name, deadline="inf"):
-        # TODO: Exception Handling
-        # TA < 0
-        self._states[name] = float(deadline)
+    def cancel_rescheduling(self):
+        self._cancel_reschedule_f = True
 
-    def retrieve_states(self):
-        return self._states
+    def get_engine_name(self):
+        return self.engine_name
 
-    def find_state(self, name):
-        return name in self._states
+    def set_engine_name(self, engine_name):
+        self.engine_name = engine_name
 
-    def insert_external_transition(self, pre_state, event, post_state):
-        self.external_transition_map_tuple[(pre_state, event)] = post_state
-        if pre_state in self.external_transition_map_state:
-            self.external_transition_map_state[pre_state].append(event, post_state)
+    def get_create_time(self):
+        return self._instance_t
+
+    def get_destruct_time(self):
+        return self._destruct_t
+
+    # state management
+    def get_cur_state(self):
+        return self._cur_state
+
+    def init_state(self, state):
+        self._cur_state = state
+
+    # External Transition
+    @abstractmethod
+    def ext_trans(self, port, msg):
+        pass
+
+    # Internal Transition
+    @abstractmethod
+    def int_trans(self):
+        pass
+
+    # Output Function
+    @abstractmethod
+    def output(self):
+        pass
+
+    # Time Advanced Function
+    def time_advance(self):       
+        if self._cur_state in self._states:    
+            return self._states[self._cur_state]
         else:
-            self.external_transition_map_state[pre_state] = [(event, post_state)]
+            return -1
 
-    def retrieve_external_transition(self, pre_state):
-        return self.external_transition_map_state[pre_state]
-
-    def retrieve_next_external_state(self, pre_state, event):
-        return self.external_transition_map_tuple[(pre_state, event)]
-
-    def find_external_transition(self, pre_state):
-        return pre_state in self.external_transition_map_state
-
-    def insert_internal_transition(self, pre_state, event, post_state):
-        self.internal_transition_map_tuple[(pre_state, event)] = post_state
-        if pre_state in self.internal_transition_map_state:
-            self.internal_transition_map_state[pre_state].append(event, post_state)
+    def set_req_time(self, global_time, elapsed_time=0):
+        if self.time_advance() == Infinite:
+            self._next_event_t = Infinite
+            self.RequestedTime = Infinite
         else:
-            self.internal_transition_map_state[pre_state] = [(event, post_state)]
+            if self._cancel_reschedule_f:
+                self.RequestedTime = min(self._next_event_t, global_time + self.time_advance())
+            else:
+                self.RequestedTime = global_time + self.time_advance()
 
-    def retrieve_internal_transition(self, pre_state):
-        return self.internal_transition_map_state[pre_state]
-
-    def retrieve_next_internal_state(self, pre_state, event):
-        return self.internal_transition_map_tuple[(pre_state, event)]
-
-    def find_internal_transition(self, pre_state):
-        return pre_state in self.internal_transition_map_state
-
-    def serialize(self):
-        json_obj = OrderedDict()
-        json_obj["name"] = self._name
-        json_obj["states"] = self._states
-        json_obj["input_ports"] = self.retrieve_input_ports()
-        json_obj["output_ports"] = self.retrieve_output_ports()
-        json_obj["external_trans"] = self.external_transition_map_state
-        json_obj["internal_trans"] = self.internal_transition_map_state
-        return json_obj
-
-    def deserialize(self, json):
-        self._name = json["name"]
-        for k, v in json["states"].items():
-            self.insert_state(k, v)
-
-        # Handle In ports
-        for port in json["input_ports"]:
-            self.insert_input_port(port)
-
-        # Handle out ports
-        for port in json["output_ports"]:
-            self.insert_output_port(port)
-
-        # Handle External Transition
-        for k, v in json["external_trans"].items():
-            for ns in v:
-                self.insert_external_transition(k, ns[0], ns[1])
-
-        # Handle Internal Transition
-        for k, v in json["internal_trans"].items():
-            for ns in v:
-                self.insert_internal_transition(k, ns[0], ns[1])
+    def get_req_time(self):    
+        if self._cancel_reschedule_f:
+            self._cancel_reschedule_f = False
+        self._next_event_t = self.RequestedTime
+        return self.RequestedTime

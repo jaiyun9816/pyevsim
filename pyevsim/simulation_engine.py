@@ -10,18 +10,19 @@ import time
 import datetime
 import threading
 
-from .definition import *
+from .base.core_model import CoreModel
+from .base.definition import *
 from .default_message_catcher import *
 #from .behavior_model import *
-from .system_object import *
+from .base.system_object import *
 
 import functools
 import operator
 import math
 
-from .termination_manager import TerminationManager
+from .base.termination_manager import TerminationManager
 
-class SysExecutor(SysObject, CoreModel):
+class SimEngine(SystemObject, CoreModel):
 
     EXTERNAL_SRC = "SRC"
     EXTERNAL_DST = "DST"

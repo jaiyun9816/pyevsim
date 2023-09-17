@@ -37,16 +37,15 @@ __all__ = [ 'behavior_model',
 			'system_message', 
 			'system_object', 
 			'system_simulator', 
-			'termination_manager']
+			'termination_manager'
+   			'core_model']
 
-from .system_simulator import SystemSimulator
-from .behavior_model_executor import BehaviorModelExecutor
+from .system_simulator import SysSimulator
+from .behavior_model import BehaviorModel
 from .system_message import SysMessage
-from .definition import (
+from .base.definition import (
 	Infinite,
-	AttributeType,
 	SimulationMode,
 	ModelType,
-	CoreModel,
 	SingletonType,
 	)
