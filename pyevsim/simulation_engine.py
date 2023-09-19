@@ -22,7 +22,7 @@ import math
 
 from .base.termination_manager import TerminationManager
 
-class SimEngine(SystemObject, CoreModel):
+class SimEngine(SysObject, CoreModel):
 
     EXTERNAL_SRC = "SRC"
     EXTERNAL_DST = "DST"

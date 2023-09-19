@@ -1,11 +1,11 @@
-from .base.system_object import SystemObject
+from .base.system_object import SysObject
 from abc import abstractmethod
 from .base.model_structure import ModelStructure
 from .base.definition import *
 
-class BehaviorModel(SystemObject, ModelStructure):
+class BehaviorModel(SysObject, ModelStructure):
     def __init__(self, instantiate_time=Infinite, destruct_time=Infinite, name=".", engine_name="default"):
-        SystemObject.__init__(self)
+        SysObject.__init__(self)
         ModelStructure.__init__(self, name)
         self.engine_name = engine_name
         self._instance_t = instantiate_time
@@ -15,8 +15,8 @@ class BehaviorModel(SystemObject, ModelStructure):
         self.RequestedTime = float("inf")
         self._not_available = None
 
-        # 2021.10.16 cbchoi
         self._cancel_reschedule_f = False
+        
 
     def __str__(self):
         return "[N]:{0}, [S]:{1}".format(self.get_name(), self._cur_state)

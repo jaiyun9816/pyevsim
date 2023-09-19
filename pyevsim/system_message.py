@@ -1,7 +1,7 @@
-from .base.system_object import  SystemObject
+from .base.system_object import  SysObject
 
 
-class SysMessage(SystemObject):
+class SysMessage(SysObject):
     def __init__(self, src_name="", dst_name=""):
         super(SysMessage, self).__init__()
         self._src = src_name
